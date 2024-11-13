@@ -7,23 +7,25 @@ import { Button } from 'src/ui/button';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Select } from 'src/ui/select';
 import { Separator } from 'src/ui/separator';
+import { Text } from 'src/ui/text';
 
 import styles from './ArticleParamsForm.module.scss';
 
 import {
+	defaultArticleState,
 	fontFamilyOptions,
 	OptionType,
 	fontSizeOptions,
 	fontColors,
 	backgroundColors,
 	contentWidthArr,
+	ArticleStateType,
 } from 'src/constants/articleProps';
 
-import { useOutsideClickClose } from './hooks/useOutsideClickClose';
+import { useClose } from './hooks/useClose';
 
 type formPropsType = {
-	onSubmit: (formState: formStateType) => void;
-	onReset: () => void;
+	setArticleState: (value: React.SetStateAction<ArticleStateType>) => void;
 };
 
 // Отдельный стейт для формы, поскольку ключи могут принимать значение null для
@@ -42,11 +44,11 @@ const defaultFormState: formStateType = {
 	fontColor: null,
 	backgroundColor: null,
 	contentWidth: null,
-	fontSizeOption: fontSizeOptions[0],
+	fontSizeOption: defaultArticleState.fontSizeOption,
 };
 
 export const ArticleParamsForm = (props: formPropsType) => {
-	const { onSubmit, onReset } = props;
+	const { setArticleState } = props;
 
 	const [formState, setFormState] = useState<formStateType>(defaultFormState);
 
@@ -57,35 +59,54 @@ export const ArticleParamsForm = (props: formPropsType) => {
 		}));
 	};
 
-	const [isOpen, setIsOpen] = useState(false);
+	const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
 
 	const rootRef = useRef<HTMLDivElement>(null);
 
-	useOutsideClickClose({ isOpen, rootRef, onChange: setIsOpen });
+	useClose({
+		isOpen: isMenuOpen,
+		rootRef,
+		onClose: () => {
+			setIsMenuOpen(false);
+		},
+	});
 
-	const showForm = () => {
-		setIsOpen(!isOpen);
+	const toggleMenu = () => {
+		setIsMenuOpen(!isMenuOpen);
 	};
 
-	const handleSubmit = (e: SyntheticEvent) => {
+	const onSubmit = (e: SyntheticEvent) => {
 		e.preventDefault();
-		onSubmit(formState);
+		const nonNullableOptions: ArticleStateType = {
+			fontFamilyOption:
+				formState.fontFamilyOption || defaultArticleState.fontFamilyOption,
+			fontColor: formState.fontColor || defaultArticleState.fontColor,
+			backgroundColor:
+				formState.backgroundColor || defaultArticleState.backgroundColor,
+			contentWidth: formState.contentWidth || defaultArticleState.contentWidth,
+			fontSizeOption:
+				formState.fontSizeOption || defaultArticleState.fontSizeOption,
+		};
+
+		setArticleState(nonNullableOptions);
 	};
 
-	const handleReset = () => {
+	const onReset = () => {
 		setFormState(defaultFormState);
-		onReset();
+		setArticleState(defaultArticleState);
 	};
 
 	return (
 		<div ref={rootRef}>
-			<ArrowButton isOpen={isOpen} onClick={showForm} />
+			<ArrowButton isOpen={isMenuOpen} onClick={toggleMenu} />
 			<aside
-				className={clsx(styles.container, isOpen && styles[`container_open`])}>
-				<form
-					className={styles.form}
-					onSubmit={handleSubmit}
-					onReset={handleReset}>
+				className={clsx(styles.container, {
+					[styles[`container_open`]]: isMenuOpen,
+				})}>
+				<form className={styles.form} onSubmit={onSubmit} onReset={onReset}>
+					<Text as={'h2'} size={31} uppercase weight={800} family={'open-sans'}>
+						Задайте параметры
+					</Text>
 					<Select
 						title='Шрифт'
 						placeholder='Выберите шрифт'
@@ -93,7 +114,6 @@ export const ArticleParamsForm = (props: formPropsType) => {
 						onChange={(option) => {
 							handleChange('fontFamilyOption', option);
 						}}
-						onClose={() => {}}
 						options={fontFamilyOptions}
 					/>
 					<RadioGroup
@@ -112,7 +132,6 @@ export const ArticleParamsForm = (props: formPropsType) => {
 						onChange={(option) => {
 							handleChange('fontColor', option);
 						}}
-						onClose={() => {}}
 						options={fontColors}
 					/>
 					<Separator />
@@ -123,7 +142,6 @@ export const ArticleParamsForm = (props: formPropsType) => {
 						onChange={(option) => {
 							handleChange('backgroundColor', option);
 						}}
-						onClose={() => {}}
 						options={backgroundColors}
 					/>
 					<Select
@@ -133,7 +151,6 @@ export const ArticleParamsForm = (props: formPropsType) => {
 						onChange={(option) => {
 							handleChange('contentWidth', option);
 						}}
-						onClose={() => {}}
 						options={contentWidthArr}
 					/>
 					<div className={styles.bottomContainer}>
