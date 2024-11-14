@@ -1,14 +1,17 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { OptionType } from 'src/constants/articleProps';
 
 type UseEnterSubmit = {
 	onChange?: (option: OptionType) => void;
+	optionRef: React.RefObject<HTMLDivElement>;
 	option: OptionType;
 };
 
-export const useEnterSubmit = ({ onChange, option }: UseEnterSubmit) => {
-	const optionRef = useRef<HTMLDivElement>(null);
-
+export const useEnterSubmit = ({
+	onChange,
+	option,
+	optionRef,
+}: UseEnterSubmit) => {
 	useEffect(() => {
 		const optionHtml = optionRef.current;
 
